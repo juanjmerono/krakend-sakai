@@ -1,0 +1,19 @@
+version: '3.3'
+
+services:
+   krakend:
+     image: devopsfaith/krakend:1.2.0
+     volumes:
+       - ${PWD}/krakend.json:/etc/krakend/krakend.json
+       - ${PWD}/plugins/headerModPlugin.so:/etc/krakend/plugins/headerModPlugin.so
+     # docker run --rm -it -v "${PWD}/plugins:/app" -w /app golang:1.15.2 go build -buildmode=plugin -o headerModPlugin.so       
+     #  - ${PWD}/localhost.pem:/etc/krakend/cert.pem
+     #  - ${PWD}/localhost-key.pem:/etc/krakend/key.pem
+     #   "tls": {
+     #    "public_key": "/etc/krakend/cert.pem",
+     #    "private_key": "/etc/krakend/key.pem"
+     #   },
+     ports:
+       - 8080:8080
+     command: [ "run", "-d", "-c", "/etc/krakend/krakend.json" ]
+

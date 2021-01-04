@@ -1,0 +1,86 @@
+{
+  "version": 2,
+  "plugin": {
+    "pattern": ".so",
+    "folder": "./plugins/"
+  },
+  "extra_config": {
+    "github_com/devopsfaith/krakend/transport/http/server/handler": {
+      "name": "headerModPlugin",
+      "url": "https://trunk-mysql.nightly.sakaiproject.org/direct/session.json?_username=admin&_password=admin"
+   }
+  },
+  "timeout": "3000ms",
+  "cache_ttl": "300s",
+  "output_encoding": "json",
+  "name": "CoolUserService",
+  "endpoints": [
+    {
+      "endpoint": "api/get-user/{userEid}",
+      "method": "GET",
+      "extra_config": {},
+      "output_encoding": "no-op",
+      "concurrent_calls": 1,
+      "headers_to_pass": [ "Authorization" , "cookie" ],
+      "querystring_params": [],
+      "backend": [
+        {
+          "method": "GET",
+          "host": [ "https://trunk-mysql.nightly.sakaiproject.org" ],
+          "url_pattern": "/direct/session/becomeuser/{userEid}.json",
+          "encoding": "no-op",
+          "extra_config": {
+            "github.com/devopsfaith/krakend/transport/http/client/executor": {
+              "name": "headerModPlugin"
+            }
+          }        
+        }
+      ]
+    },
+    {
+      "endpoint": "api/current",
+      "method": "GET",
+      "extra_config": {},
+      "headers_to_pass": [ "Authorization" , "cookie" ],
+      "querystring_params": [],
+      "backend": [
+        {
+          "method": "GET",
+          "host": [ "https://trunk-mysql.nightly.sakaiproject.org" ],
+          "url_pattern": "/direct/user/current.json",
+          "whitelist": ["id","displayId"],
+          "extra_config": {
+            "github.com/devopsfaith/krakend/transport/http/client/executor": {
+              "name": "headerModPlugin"
+            }
+          }        
+        },
+        {
+          "method": "GET",
+          "host": [ "https://trunk-mysql.nightly.sakaiproject.org" ],
+          "url_pattern": "/direct/membership.json",
+          "blacklist": ["entityPrefix"],
+          "extra_config": {
+            "github.com/devopsfaith/krakend/proxy": {
+              "flatmap_filter": [
+                  {
+                      "type": "del",
+                      "args": ["membership_collection.*.entityId"]
+                  },
+                  {
+                    "type": "del",
+                    "args": ["membership_collection.*.entityReference"]
+                  }
+            ]
+            },
+            "github.com/devopsfaith/krakend/transport/http/client/executor": {
+              "name": "headerModPlugin"
+            }
+          }        
+        }
+
+      ]
+    }
+
+  ]
+}
