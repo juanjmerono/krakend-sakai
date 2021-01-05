@@ -5,9 +5,10 @@ services:
      image: devopsfaith/krakend:1.2.0
      volumes:
        - ./krakend.json:/etc/krakend/krakend.json
-       - ./plugins/headerModPlugin.so:/etc/krakend/plugins/headerModPlugin.so
+       #- ./server/serverPlugin.so:/etc/krakend/plugins/serverPlugin.so
+       #- ./client/clientPlugin.so:/etc/krakend/plugins/clientPlugin.so
+       - ./plugin/plugin.so:/etc/krakend/plugins/plugin.so
        - ./plugin.json:/etc/krakend/plugins/plugin-conf.json
-     # docker run --rm -it -v "${PWD}/plugins:/app" -w /app golang:1.15.2 go build -buildmode=plugin -o headerModPlugin.so       
      #  - ${PWD}/localhost.pem:/etc/krakend/cert.pem
      #  - ${PWD}/localhost-key.pem:/etc/krakend/key.pem
      #   "tls": {

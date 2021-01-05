@@ -4,21 +4,39 @@
     "pattern": ".so",
     "folder": "./plugins/"
   },
-  "extra_config": {
-    "github_com/devopsfaith/krakend/transport/http/server/handler": {
-      "name": "headerModPlugin",
-      "conf": "/etc/krakend/plugins/plugin-conf.json"
-   }
-  },
-  "timeout": "3000ms",
+  "timeout": "30000ms",
   "cache_ttl": "300s",
   "output_encoding": "json",
   "name": "CoolUserService",
+  "extra_config": {
+    "github.com/devopsfaith/krakend/transport/http/server/handler": {
+      "name": ["serverPlugin"]
+    }
+  },	
   "endpoints": [
+    {
+      "endpoint": "api/get-token/{userEid}",
+      "method": "POST",
+      "extra_config": {
+        "github.com/devopsfaith/krakend-jose/signer": {
+            "alg": "HS256",
+            "kid": "sim2",
+            "keys-to-sign": ["access_token"],
+            "jwk-url": "https://run.mocky.io/v3/a433e92c-6f25-4981-a7e5-4b710efc1e8e",
+            "disable_jwk_security": true
+        }
+      },
+      "backend": [
+        {
+          "method": "GET",
+          "host": [ "https://run.mocky.io" ],
+          "url_pattern": "/v3/71606706-fd49-4a1a-abf4-bf4d0d883781"
+        }
+      ]
+    },
     {
       "endpoint": "api/get-user/{userEid}",
       "method": "GET",
-      "extra_config": {},
       "output_encoding": "no-op",
       "concurrent_calls": 1,
       "headers_to_pass": [ "Authorization" , "cookie" ],
@@ -31,9 +49,10 @@
           "encoding": "no-op",
           "extra_config": {
             "github.com/devopsfaith/krakend/transport/http/client/executor": {
-              "name": "headerModPlugin"
+              "name": "clientPlugin",
+              "conf": "/etc/krakend/plugins/plugin-conf.json"
             }
-          }        
+          }    
         }
       ]
     },
@@ -51,9 +70,10 @@
           "whitelist": ["id","displayId"],
           "extra_config": {
             "github.com/devopsfaith/krakend/transport/http/client/executor": {
-              "name": "headerModPlugin"
+              "name": "clientPlugin",
+              "conf": "/etc/krakend/plugins/plugin-conf.json"
             }
-          }        
+          }    
         },
         {
           "method": "GET",
@@ -61,6 +81,10 @@
           "url_pattern": "/direct/membership.json",
           "blacklist": ["entityPrefix"],
           "extra_config": {
+            "github.com/devopsfaith/krakend/transport/http/client/executor": {
+              "name": "clientPlugin",
+              "conf": "/etc/krakend/plugins/plugin-conf.json"
+            },
             "github.com/devopsfaith/krakend/proxy": {
               "flatmap_filter": [
                   {
@@ -71,14 +95,10 @@
                     "type": "del",
                     "args": ["membership_collection.*.entityReference"]
                   }
-            ]
-            },
-            "github.com/devopsfaith/krakend/transport/http/client/executor": {
-              "name": "headerModPlugin"
+              ]
             }
           }        
         }
-
       ]
     }
 

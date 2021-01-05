@@ -1,7 +1,13 @@
 {
     "postURL": "https://trunk-mysql.nightly.sakaiproject.org/direct/session.json?_username=admin&_password=admin",
-    "apiKeys": [ 
-        { "username":"test","password":"test" },
-        { "username":"test2","password":"test2" } 
+    "apiKeys": [
+        {
+            "username": "test",
+            "password": "test"
+        },
+        {
+            "username": "test2",
+            "password": "test2"
+        }
     ]
 }

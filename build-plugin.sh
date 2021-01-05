@@ -1,1 +1,2 @@
-docker run --rm -it -v "${PWD}/plugins:/app" -w /app golang:1.15.2 go build -buildmode=plugin -o headerModPlugin.so
+docker run --rm -it -v "${PWD}/server:/app" -w /app golang:1.15.2 go build -buildmode=plugin -o serverPlugin.so .
+docker run --rm -it -v "${PWD}/client:/app" -w /app golang:1.15.2 go build -buildmode=plugin -o clientPlugin.so .
