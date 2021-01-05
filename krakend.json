@@ -7,7 +7,7 @@
   "extra_config": {
     "github_com/devopsfaith/krakend/transport/http/server/handler": {
       "name": "headerModPlugin",
-      "url": "https://trunk-mysql.nightly.sakaiproject.org/direct/session.json?_username=admin&_password=admin"
+      "conf": "/etc/krakend/plugins/plugin-conf.json"
    }
   },
   "timeout": "3000ms",

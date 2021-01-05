@@ -2,13 +2,15 @@ package main
 
 import (
 	"context"
-	"errors"
 	"fmt"
-	//"io/ioutil"
+	"errors"
+	//"os"
+	"io/ioutil"
 	"net/http"
 	"time"
 	"encoding/base64"
 	"strings"
+	"encoding/json"
 )
 
 func init() {
@@ -35,20 +37,43 @@ func (r registrable) RegisterHandlers(f func(
 	f(pluginName, r.registerHandlers)
 }
 
+type PluginConf struct {
+	Posturl string `json:"postURL"`
+    Apikeys []TCredential `json:"apiKeys"`
+}
 
-func validate(username, password string) bool {
-    if username == "test" && password == "test" {
-        return true
-    }
+type TCredential struct {
+	Username string `json:"username"`
+    Password string `json:"password"`
+}
+
+func validate(pConf PluginConf, username string, password string) bool {
+	for _,cred := range pConf.Apikeys {
+    	if username == cred.Username && password == cred.Password {
+        	return true
+		}
+	}
     return false
 }
 
 func (r registrable) registerHandlers(ctx context.Context, extra map[string]interface{}, handler http.Handler) (http.Handler, error) {
-	url, ok := extra["url"].(string)
+	configfile, ok := extra["conf"].(string)
 	if !ok {
 		panic(errors.New("incorrect config").Error())
 	}
-	fmt.Println("headerModPlugin plugin is registered!",url)
+	
+	byteValue, err := ioutil.ReadFile(configfile)
+	if err != nil {
+		panic(errors.New("incorrect config file").Error())
+	}
+
+	var pluginConf PluginConf
+
+	json.Unmarshal(byteValue, &pluginConf)
+
+	//fmt.Println("PluginConf: ", pluginConf)
+
+	fmt.Println("headerModPlugin plugin is registered!")
 
 	client := &http.Client{Timeout: 3 * time.Second}
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
@@ -69,12 +94,13 @@ func (r registrable) registerHandlers(ctx context.Context, extra map[string]inte
 			payload, _ := base64.StdEncoding.DecodeString(auth[1])
 			pair := strings.SplitN(string(payload), ":", 2)
 
-			if len(pair) != 2 || !validate(pair[0], pair[1]) {
+			if len(pair) != 2 || !validate(pluginConf, pair[0], pair[1]) {
 				http.Error(w, "authorization failed", http.StatusUnauthorized)
 				return
 			}
+
 			// Auth ready now create session
-			rq, err := http.NewRequest(http.MethodPost, url, nil)
+			rq, err := http.NewRequest(http.MethodPost, pluginConf.Posturl, nil)
 			if err != nil {
 				http.Error(w, err.Error(), http.StatusBadRequest)
 				return
