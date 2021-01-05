@@ -28,12 +28,7 @@
           "method": "GET",
           "host": [ "https://trunk-mysql.nightly.sakaiproject.org" ],
           "url_pattern": "/direct/session/becomeuser/{userEid}.json",
-          "encoding": "no-op",
-          "extra_config": {
-            "github.com/devopsfaith/krakend/transport/http/client/executor": {
-              "name": "headerModPlugin"
-            }
-          }        
+          "encoding": "no-op"
         }
       ]
     },
@@ -48,12 +43,7 @@
           "method": "GET",
           "host": [ "https://trunk-mysql.nightly.sakaiproject.org" ],
           "url_pattern": "/direct/user/current.json",
-          "whitelist": ["id","displayId"],
-          "extra_config": {
-            "github.com/devopsfaith/krakend/transport/http/client/executor": {
-              "name": "headerModPlugin"
-            }
-          }        
+          "whitelist": ["id","displayId"]
         },
         {
           "method": "GET",
@@ -72,9 +62,6 @@
                     "args": ["membership_collection.*.entityReference"]
                   }
             ]
-            },
-            "github.com/devopsfaith/krakend/transport/http/client/executor": {
-              "name": "headerModPlugin"
             }
           }        
         }

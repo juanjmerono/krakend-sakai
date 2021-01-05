@@ -119,6 +119,8 @@ func (r registrable) registerHandlers(ctx context.Context, extra map[string]inte
 					r2.AddCookie(cookie)
 					jwtToken := base64.StdEncoding.EncodeToString([]byte(cookie.Raw))
 					w.Header().Set("X-JWT-TOKEN",jwtToken)
+					fmt.Fprintf(w, "{\"message\": \"Hello, %s\"}", "PEPE")
+					handler.ServeHTTP(w, r2)
 				}
 			}
 
@@ -126,10 +128,8 @@ func (r registrable) registerHandlers(ctx context.Context, extra map[string]inte
 			// Bearer Token for next calls
 			payload, _ := base64.StdEncoding.DecodeString(auth[1])
 			r2.Header.Set("cookie",string(payload))
+			handler.ServeHTTP(w, r2)
 		}
-
-		handler.ServeHTTP(w, r2)
-		//fmt.Fprintf(w, "{\"message\": \"Hello, %s\"}", html.EscapeString(req.URL.Path))
 
 	}), nil
 }
