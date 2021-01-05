@@ -9,7 +9,8 @@
     "github_com/devopsfaith/krakend/transport/http/server/handler": {
       "name": "login-plugin",
       "conf": "/etc/krakend/plugins/plugin-conf.json",
-      "host": "{{ .service.backend }}"
+      "host": "{{ .service.backend }}",
+      "auth": "bearer"
    }
   },
   "timeout": "3000ms",

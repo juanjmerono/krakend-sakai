@@ -1,2 +1,2 @@
 *.so
-localhost*
+.DS_Store

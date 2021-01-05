@@ -1,6 +1,14 @@
 version: '3.3'
 
 services:
+   nginx-proxy:
+     image: jwilder/nginx-proxy
+     ports:
+      - "80:80"
+     volumes:
+      - /var/run/docker.sock:/tmp/docker.sock:ro
+      - ./nginx.conf:/etc/nginx/vhost.d/8d1a4e25525e.ngrok.io:ro
+
    krakend:
      image: devopsfaith/krakend:1.2.0
      volumes:
@@ -13,6 +21,21 @@ services:
         - FC_SETTINGS=/etc/krakend/config/settings
         #- FC_PARTIALS=/etc/krakend/config/partials
         #- FC_TEMPLATES=/etc/krakend/config/templates
-     ports:
-       - 8080:8080
+     expose:
+       - 8080
      command: [ "run", "-d", "-c", "/etc/krakend/krakend.json" ]
+
+   gateway:
+     image: jwilder/whoami
+     environment:
+      - VIRTUAL_HOST=8d1a4e25525e.ngrok.io
+
+   swagger:
+     image: swaggerapi/swagger-ui
+     volumes:
+       - ./openapi.json:/app/swagger.json
+     environment:
+       - BASE_URL=/swagger
+       - SWAGGER_JSON=/app/swagger.json
+     expose:
+       - 8080

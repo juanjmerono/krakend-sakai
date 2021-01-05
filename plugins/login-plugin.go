@@ -68,6 +68,10 @@ func (r registrable) registerHandlers(ctx context.Context, extra map[string]inte
 	if !ok {
 		panic(errors.New("incorrect config").Error())
 	}
+	authSchema, ok := extra["auth"].(string)
+	if !ok {
+		panic(errors.New("incorrect config").Error())
+	}
 
 	byteValue, err := ioutil.ReadFile(configfile)
 	if err != nil {
@@ -124,11 +128,15 @@ func (r registrable) registerHandlers(ctx context.Context, extra map[string]inte
 					if cookie.Name == cname {
 						r2.AddCookie(cookie)
 						jwtToken += base64.StdEncoding.EncodeToString([]byte(cookie.Raw))
-						http.SetCookie(w,cookie)
+						if authSchema == "cookie" {
+							http.SetCookie(w,cookie)
+						}
 					}
 				}
 			}
-			w.Header().Set(outputHeaderName,jwtToken)
+			if authSchema == "bearer" {
+				w.Header().Set(outputHeaderName,jwtToken)
+			}
 			fmt.Fprintf(w, "{ \"message\": \"")
 			handler.ServeHTTP(w, r2)
 			fmt.Fprintf(w, "\"}")
