@@ -4,21 +4,22 @@
     "pattern": ".so",
     "folder": "./plugins/"
   },
+  "host": [ "{{ .service.backend }}" ],
   "extra_config": {
     "github_com/devopsfaith/krakend/transport/http/server/handler": {
-      "name": "headerModPlugin",
-      "conf": "/etc/krakend/plugins/plugin-conf.json"
+      "name": "login-plugin",
+      "conf": "/etc/krakend/plugins/plugin-conf.json",
+      "host": "{{ .service.backend }}"
    }
   },
   "timeout": "3000ms",
   "cache_ttl": "300s",
   "output_encoding": "json",
-  "name": "CoolUserService",
+  "name": "SakaiAPIService",
   "endpoints": [
     {
-      "endpoint": "api/get-user/{userEid}",
+      "endpoint": "api/login/{userEid}",
       "method": "GET",
-      "extra_config": {},
       "output_encoding": "no-op",
       "concurrent_calls": 1,
       "headers_to_pass": [ "Authorization" , "cookie" ],
@@ -26,7 +27,6 @@
       "backend": [
         {
           "method": "GET",
-          "host": [ "https://trunk-mysql.nightly.sakaiproject.org" ],
           "url_pattern": "/direct/session/becomeuser/{userEid}.json",
           "encoding": "no-op"
         }
@@ -36,26 +36,25 @@
       "endpoint": "api/current",
       "method": "GET",
       "extra_config": {},
-      "headers_to_pass": [ "Authorization" , "cookie" ],
+      "headers_to_pass": [ "cookie" ],
       "querystring_params": [],
       "backend": [
         {
           "method": "GET",
-          "host": [ "https://trunk-mysql.nightly.sakaiproject.org" ],
+          
           "url_pattern": "/direct/user/current.json",
           "whitelist": ["id","displayId"]
         },
         {
           "method": "GET",
-          "host": [ "https://trunk-mysql.nightly.sakaiproject.org" ],
           "url_pattern": "/direct/membership.json",
           "blacklist": ["entityPrefix"],
           "extra_config": {
             "github.com/devopsfaith/krakend/proxy": {
               "flatmap_filter": [
                   {
-                      "type": "del",
-                      "args": ["membership_collection.*.entityId"]
+                    "type": "del",
+                    "args": ["membership_collection.*.entityId"]
                   },
                   {
                     "type": "del",

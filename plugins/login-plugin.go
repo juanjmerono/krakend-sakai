@@ -4,28 +4,28 @@ import (
 	"context"
 	"fmt"
 	"errors"
-	//"os"
 	"io/ioutil"
 	"net/http"
-	"time"
+	"net/url"
+	//"time"
 	"encoding/base64"
 	"strings"
 	"encoding/json"
 )
 
 func init() {
-	fmt.Println("headerModPlugin plugin is loaded!")
+	fmt.Println("login-plugin is loaded!")
 }
 
 func main() {}
 
 // HandlerRegisterer is the name of the symbol krakend looks up to try and register plugins
-var HandlerRegisterer registrable = registrable("headerModPlugin")
+var HandlerRegisterer registrable = registrable("login-plugin")
 
 type registrable string
 
-const outputHeaderName = "X-Friend-User"
-const pluginName = "headerModPlugin"
+const outputHeaderName = "X-AUTH-TOKEN"
+const pluginName = "login-plugin"
 
 func (r registrable) RegisterHandlers(f func(
 	name string,
@@ -38,7 +38,10 @@ func (r registrable) RegisterHandlers(f func(
 }
 
 type PluginConf struct {
-	Posturl string `json:"postURL"`
+	Path string `json:"path"`
+	User string `json:"user"`
+	Pass string `json:"pwd"`
+	Cookies []string `json:"cookies"`
     Apikeys []TCredential `json:"apiKeys"`
 }
 
@@ -61,7 +64,11 @@ func (r registrable) registerHandlers(ctx context.Context, extra map[string]inte
 	if !ok {
 		panic(errors.New("incorrect config").Error())
 	}
-	
+	backendHost, ok := extra["host"].(string)
+	if !ok {
+		panic(errors.New("incorrect config").Error())
+	}
+
 	byteValue, err := ioutil.ReadFile(configfile)
 	if err != nil {
 		panic(errors.New("incorrect config file").Error())
@@ -73,23 +80,24 @@ func (r registrable) registerHandlers(ctx context.Context, extra map[string]inte
 
 	//fmt.Println("PluginConf: ", pluginConf)
 
-	fmt.Println("headerModPlugin plugin is registered!")
+	fmt.Println("login-plugin is registered!")
 
-	client := &http.Client{Timeout: 3 * time.Second}
+	//client := &http.Client{Timeout: 3 * time.Second}
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 
 		// Validate Basic Auth
         auth := strings.SplitN(r.Header.Get("Authorization"), " ", 2)
 
-        if len(auth) != 2 || (auth[0] != "Basic" && auth[0] != "Bearer") {
-            http.Error(w, "authorization failed", http.StatusUnauthorized)
-            return
-		}
-		
 		r2 := new(http.Request)
 		*r2 = *r
 
-		if auth[0] != "Bearer" {
+		if auth[0] == "Bearer" {
+			// Bearer Token for next calls
+			payload, _ := base64.StdEncoding.DecodeString(auth[1])
+			r2.Header.Set("cookie",string(payload))
+		}
+
+		if auth[0] == "Basic" {
 			// Basic Auth for initial token
 			payload, _ := base64.StdEncoding.DecodeString(auth[1])
 			pair := strings.SplitN(string(payload), ":", 2)
@@ -100,35 +108,34 @@ func (r registrable) registerHandlers(ctx context.Context, extra map[string]inte
 			}
 
 			// Auth ready now create session
-			rq, err := http.NewRequest(http.MethodPost, pluginConf.Posturl, nil)
-			if err != nil {
-				http.Error(w, err.Error(), http.StatusBadRequest)
-				return
-			}
-
-			rs, err := client.Do(rq)
+			rs, err := http.PostForm(backendHost+pluginConf.Path, url.Values{
+				"_username": { pluginConf.User },
+				"_password": { pluginConf.Pass },
+			})
 			if err != nil {
 				http.Error(w, err.Error(), http.StatusNotAcceptable)
 				return
 			}
 			defer rs.Body.Close()
 
+			jwtToken := ""
 			for _, cookie := range rs.Cookies() {
-				//fmt.Println("Found a cookie named:", cookie.Name, cookie.Value)
-				if cookie.Name == "SAKAIID" {
-					r2.AddCookie(cookie)
-					jwtToken := base64.StdEncoding.EncodeToString([]byte(cookie.Raw))
-					w.Header().Set("X-JWT-TOKEN",jwtToken)
-					fmt.Fprintf(w, "{\"message\": \"Hello, %s\"}", "PEPE")
-					handler.ServeHTTP(w, r2)
+				for _, cname := range pluginConf.Cookies {
+					if cookie.Name == cname {
+						r2.AddCookie(cookie)
+						jwtToken += base64.StdEncoding.EncodeToString([]byte(cookie.Raw))
+						http.SetCookie(w,cookie)
+					}
 				}
 			}
+			w.Header().Set(outputHeaderName,jwtToken)
+			fmt.Fprintf(w, "{ \"message\": \"")
+			handler.ServeHTTP(w, r2)
+			fmt.Fprintf(w, "\"}")
 
 		} else {
-			// Bearer Token for next calls
-			payload, _ := base64.StdEncoding.DecodeString(auth[1])
-			r2.Header.Set("cookie",string(payload))
-			handler.ServeHTTP(w, r2)
+			// Do nothing
+			handler.ServeHTTP(w, r)
 		}
 
 	}), nil

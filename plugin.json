@@ -1,5 +1,8 @@
 {
-    "postURL": "https://trunk-mysql.nightly.sakaiproject.org/direct/session.json?_username=admin&_password=admin",
+    "path": "/direct/session.json",
+    "user": "admin",
+    "pwd": "admin",
+    "cookies": [ "SAKAIID" ],
     "apiKeys": [ 
         { "username":"test","password":"test" },
         { "username":"test2","password":"test2" } 
