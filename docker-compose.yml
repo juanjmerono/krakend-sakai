@@ -7,7 +7,7 @@ services:
       - "80:80"
      volumes:
       - /var/run/docker.sock:/tmp/docker.sock:ro
-      - ./nginx.conf:/etc/nginx/vhost.d/8d1a4e25525e.ngrok.io:ro
+      - ./nginx.conf:/etc/nginx/vhost.d/default:ro
 
    krakend:
      image: devopsfaith/krakend:1.2.0
@@ -28,7 +28,7 @@ services:
    gateway:
      image: jwilder/whoami
      environment:
-      - VIRTUAL_HOST=8d1a4e25525e.ngrok.io
+      - VIRTUAL_HOST=*.ngrok.io
 
    swagger:
      image: swaggerapi/swagger-ui
