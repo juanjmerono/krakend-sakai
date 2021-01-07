@@ -127,7 +127,8 @@ func (r registrable) registerHandlers(ctx context.Context, extra map[string]inte
 				for _, cname := range pluginConf.Cookies {
 					if cookie.Name == cname {
 						r2.AddCookie(cookie)
-						jwtToken += base64.StdEncoding.EncodeToString([]byte(cookie.Raw))
+						cookieVal := strings.SplitN(cookie.Raw, ";", 2)
+						jwtToken += cookieVal[0] + ";"
 						if authSchema == "cookie" {
 							http.SetCookie(w,cookie)
 						}
@@ -135,7 +136,7 @@ func (r registrable) registerHandlers(ctx context.Context, extra map[string]inte
 				}
 			}
 			if authSchema == "bearer" {
-				w.Header().Set(outputHeaderName,jwtToken)
+				w.Header().Set(outputHeaderName,base64.StdEncoding.EncodeToString([]byte(jwtToken)))
 			}
 			fmt.Fprintf(w, "{ \"message\": \"")
 			handler.ServeHTTP(w, r2)
